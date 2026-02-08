@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(STUDENT)
+  onboarded     Boolean   @default(false)
+  bio           String?
+  phoneNumber   String?
+  
+  // Relations
+  skills        Skill[]
+  education     Education[]
+  experience    Experience[]
+  projects      Project[]
+
+  otp           String?
+  otpExpires    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Skill {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  name   String
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Education {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String  @db.ObjectId
+  school      String
+  degree      String
+  field       String?
+  startYear   String?
+  endYear     String?
+  grade       String?
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Experience {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String  @db.ObjectId
+  company     String
+  position    String?
+  description String?
+  startDate   String?
+  endDate     String?
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String  @db.ObjectId
+  title       String
+  description String?
+  link        String?
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+}
+
+enum Role {
+  STUDENT
+  MENTOR
+  ADMIN
+}
