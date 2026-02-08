@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import db from "@/lib/db";
 import { ProfileContent } from "@/components/pages/profile/profilePage";
 import { redirect } from "next/navigation";
 

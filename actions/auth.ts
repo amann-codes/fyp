@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@/lib/db";
+import db from "@/lib/db";
 import { sendEmail } from "@/lib/mail";
 import bcrypt from "bcryptjs";
 import { generatePasswordResetToken } from "@/actions/token";

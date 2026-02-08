@@ -4,11 +4,12 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Linkedin, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Mail, Lock, Eye, EyeOff, Loader2, Github } from "lucide-react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 export function SigninForm() {
   const [email, setEmail] = useState("");
@@ -24,11 +25,28 @@ export function SigninForm() {
       redirect: true,
       callbackUrl: "/careers",
     });
+    
     if (result?.error) {
       toast.error("Invalid credentials");
       setIsLoading(false);
     }
   };
+
+  const searchParams = useSearchParams();
+  const urlError = searchParams.get("error");
+
+  useEffect(() => {
+    if (urlError === "OAuthAccountNotLinked") {
+      toast.error("Email already in use", {
+        description: "To confirm your identity, sign in with the same provider you used originally.",
+      });
+    } else if (urlError === "CredentialsSignin") {
+      toast.error("Invalid credentials", {
+        description: "Please check your email and password."
+      })
+    }
+  }, [urlError]);
+
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -79,8 +97,8 @@ export function SigninForm() {
             <Button variant="outline" className="h-11" onClick={() => signIn("google", { callbackUrl: "/careers" })}>
               <GoogleIcon className="mr-2 h-4 w-4" /> Google
             </Button>
-            <Button variant="outline" className="h-11" onClick={() => signIn("linkedin", { callbackUrl: "/careers" })}>
-              <Linkedin className="mr-2 h-4 w-4 text-[#0077B5]" /> LinkedIn
+            <Button variant="outline" className="h-11" onClick={() => signIn("github", { callbackUrl: "/careers" })}>
+              <Github className="mr-2 h-4 w-4" /> Github
             </Button>
           </div>
 

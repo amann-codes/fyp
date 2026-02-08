@@ -1,5 +1,5 @@
 import { signOut, auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import db from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { LogOut, User as UserIcon, BadgeCheck } from "lucide-react";
 

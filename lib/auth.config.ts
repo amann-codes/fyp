@@ -1,46 +1,42 @@
-import { NextAuthConfig } from "next-auth";
-import { db } from "@/lib/db";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import Credentials from "next-auth/providers/credentials";
+import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
-import { compare } from "bcryptjs";
+import Github from "next-auth/providers/github";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import prisma from "./db";
 
-export const authOptions = {
-  adapter: PrismaAdapter(db),
+export default {
+  adapter: PrismaAdapter(prisma),
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
       allowDangerousEmailAccountLinking: true,
     }),
-    Credentials({
-      authorize: async (credentials) => {
-        if (!credentials?.email || !credentials?.password) return null;
-        const user = await db.user.findUnique({
-          where: { email: credentials.email as string },
-        });
-        if (user && user.password && (await compare(String(credentials.password), user.password))) {
-          return user;
-        }
-        return null;
-      }
-    })
+    Github({
+      clientId: process.env.AUTH_GITHUB_ID,
+      clientSecret: process.env.AUTH_GITHUB_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    }),
   ],
   session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user }) {
-      // On sign in, add the ID
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
       }
 
-      // ALWAYS verify status from DB to ensure it's correct
       if (token.id) {
-        const dbUser = await db.user.findUnique({
+        const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { onboarded: true }
+          select: { onboarded: true },
         });
-        token.onboarded = dbUser?.onboarded ?? false;
+        if (dbUser) {
+          token.onboarded = dbUser.onboarded;
+        }
+      }
+
+      if (trigger === "update" && session) {
+        token.onboarded = session.onboarded;
       }
 
       return token;
@@ -48,12 +44,12 @@ export const authOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        (session.user as any).onboarded = token.onboarded as boolean;
+        (session.user as any).onboarded = token.onboarded;
       }
       return session;
     },
   },
   pages: {
     signIn: "/signin"
-  }
+  },
 } satisfies NextAuthConfig;
